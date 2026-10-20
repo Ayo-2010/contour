@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contour · Kestrel Ridge trail atlas</title>
+<meta name="description" content="An interactive topographic trail atlas for Kestrel Ridge. Six routes with elevation profiles, waypoints, filters and field notes, built with plain HTML, CSS and JavaScript.">
+<meta name="theme-color" content="#16241c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2316241c'/%3E%3Cpath d='M12 44c8-16 14-24 22-24s12 8 18 20' fill='none' stroke='%23f2ecdf' stroke-width='2'/%3E%3Cpath d='M18 48c6-10 12-16 18-16s10 6 14 14' fill='none' stroke='%23c9552c' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip-link" href="#atlas">Skip to the atlas</a>
+
+<header class="topbar">
+  <a class="brand" href="#top" aria-label="Contour, back to top">
+    <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+      <path d="M4 28c5-11 9-17 16-17s10 6 16 15" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M8 31c4-7 8-11 12-11s8 4 12 10" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M12 34c3-4 5-6 8-6s5 2 8 5" fill="none" stroke="#c9552c" stroke-width="1.8"/>
+      <circle cx="20" cy="19" r="2" fill="#c9552c"/>
+    </svg>
+    <span>Contour</span>
+  </a>
+  <p class="topbar-region">Kestrel Ridge <span>/</span> 46.82° N</p>
+  <nav class="topnav" aria-label="Sections">
+    <a href="#atlas">Atlas</a>
+    <a href="#routes">Routes</a>
+    <a href="#notes">Field notes</a>
+  </nav>
+  <p class="survey"><i aria-hidden="true"></i> Survey current</p>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">Trail atlas / Edition 06</p>
+      <h1>Read the <em>ground</em> before you walk it.</h1>
+      <p class="lede">Six routes through a folded corner of the Cascades. Contours, creeks, old growth and the places worth stopping for a minute.</p>
+      <div class="hero-stats">
+        <div><b id="routeCount">6</b><span>routes</span></div>
+        <div><b id="totalDistance">42.6</b><span>kilometres</span></div>
+        <div><b id="totalAscent">2,843</b><span>metres gain</span></div>
+      </div>
+    </div>
+    <aside class="conditions" aria-label="Field conditions">
+      <div class="conditions-head">
+        <span class="mono">Field conditions</span>
+        <span class="mono">18 Oct 2026</span>
+      </div>
+      <div class="condition-row"><span>Trail state</span><b>Dry, firm</b></div>
+      <div class="condition-row"><span>Snow line</span><b>1,850 m</b></div>
+      <div class="condition-row"><span>Daylight</span><b>10 h 42</b></div>
+      <p>Cool mornings, clear ridgelines and low creeks. Carry a warm layer for the passes.</p>
+    </aside>
+  </section>
+
+  <section class="atlas" id="atlas" aria-labelledby="atlasTitle">
+    <div class="map-column">
+    <article class="map-panel panel">
+      <div class="panel-bar">
+        <div class="panel-title">
+          <span class="mono">Map 01</span>
+          <h2 id="atlasTitle">Kestrel Ridge</h2>
+        </div>
+        <div class="map-tools">
+          <button class="layer-btn is-on" id="layerContours" type="button" aria-pressed="true">Contours</button>
+          <button class="layer-btn is-on" id="layerWaypoints" type="button" aria-pressed="true">Waypoints</button>
+          <span class="tool-divider" aria-hidden="true"></span>
+          <button class="icon-btn" id="zoomOut" type="button" aria-label="Zoom out">−</button>
+          <button class="icon-btn" id="zoomIn" type="button" aria-label="Zoom in">+</button>
+          <button class="text-btn" id="fitRoute" type="button">Focus</button>
+          <button class="text-btn" id="resetMap" type="button">Reset</button>
+        </div>
+      </div>
+
+      <div class="map-wrap" id="mapWrap">
+        <svg id="map" viewBox="0 0 900 660" role="img" aria-label="Topographic trail map of Kestrel Ridge with six hiking routes">
+          <defs>
+            <pattern id="gridPattern" width="45" height="45" patternUnits="userSpaceOnUse">
+              <path d="M45 0H0V45" fill="none" stroke="#c9bda5" stroke-width="0.6" opacity="0.55"/>
+            </pattern>
+            <radialGradient id="peakWash" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#d8c69e" stop-opacity="0.75"/>
+              <stop offset="100%" stop-color="#d8c69e" stop-opacity="0"/>
+            </radialGradient>
+            <symbol id="tree" viewBox="0 0 12 20">
+              <path d="M6 0 12 11H8l4 7H0l4-7H2Z" fill="currentColor"/>
+              <path d="M6 18v2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+            </symbol>
+          </defs>
+          <rect width="900" height="660" fill="#f0e9da"/>
+          <rect width="900" height="660" fill="url(#gridPattern)"/>
+          <g id="mapWorld">
+            <g id="terrainLayer" class="contour-layer"></g>
+            <g id="waterLayer">
+              <path class="river" d="M894 54C836 94 862 142 808 178C754 214 778 258 728 292C678 326 700 372 650 402C600 432 562 456 502 476C442 496 356 494 296 474"/>
+              <path class="river-highlight" d="M894 54C836 94 862 142 808 178C754 214 778 258 728 292C678 326 700 372 650 402C600 432 562 456 502 476C442 496 356 494 296 474"/>
+              <path class="lake" d="M122 500C108 458 132 414 178 402C228 390 276 416 286 462C296 508 260 548 208 552C158 556 132 538 122 500Z"/>
+              <path class="lake-ripple" d="M150 470C166 454 196 450 218 460C240 470 252 488 248 506"/>
+              <path class="lake-ripple" d="M158 512C176 500 206 500 226 512"/>
+              <text class="water-label" x="202" y="482" text-anchor="middle">ALDER LAKE</text>
+            </g>
+            <g id="labelLayer">
+              <text class="map-label region" x="356" y="198" transform="rotate(-17 356 198)">KESTREL RIDGE</text>
+              <text class="map-label peak" x="606" y="86">GRANITE PASS</text>
+              <text class="map-label area" x="516" y="584">CEDAR HOLLOW</text>
+              <text class="map-label area" x="744" y="338">LOOKOUT HILL</text>
+              <g class="spot" transform="translate(650 118)">
+                <path d="M-5 0H5M0-5V5"/>
+                <text x="9" y="4">1,840</text>
+              </g>
+              <g class="spot" transform="translate(804 356)">
+                <path d="M-5 0H5M0-5V5"/>
+                <text x="9" y="4">1,120</text>
+              </g>
+              <g class="spot" transform="translate(566 526)">
+                <path d="M-5 0H5M0-5V5"/>
+                <text x="9" y="4">640</text>
+              </g>
+            </g>
+            <g id="trailLayer"></g>
+            <g id="waypointLayer" class="waypoint-layer"></g>
+          </g>
+        </svg>
+        <div class="map-legend" aria-hidden="true">
+          <span><i class="dot easy"></i>Easy</span>
+          <span><i class="dot moderate"></i>Moderate</span>
+          <span><i class="dot hard"></i>Hard</span>
+        </div>
+        <div class="map-scale" aria-hidden="true">
+          <span class="scale-bar"></span>
+          <div><span>0</span><span>250</span><span>500 m</span></div>
+        </div>
+        <div class="map-north" aria-hidden="true">
+          <span>N</span>
+          <svg viewBox="0 0 24 24"><path d="M12 3 17 19 12 15 7 19Z" fill="currentColor"/></svg>
+        </div>
+        <div class="map-tooltip" id="mapTooltip" hidden>
+          <b id="mapTooltipName"></b>
+          <span id="mapTooltipMeta"></span>
+        </div>
+      </div>
+    </article>
+
+    <section class="profile-panel panel" aria-labelledby="profileTitle">
+      <div class="profile-head">
+        <div>
+          <p class="mono">Elevation / selected route</p>
+          <h2 id="profileTitle">Kestrel Ridge Traverse</h2>
+        </div>
+        <div class="profile-legend">
+          <span class="mono" id="profileGain">+890 m</span>
+          <span class="mono" id="profileRange">420–1,310 m</span>
+        </div>
+      </div>
+      <div class="profile-chart" id="profileChart">
+        <svg id="profileSvg" viewBox="0 0 900 220" role="img" aria-label="Elevation profile for Kestrel Ridge Traverse">
+          <g id="profileGrid"></g>
+          <path id="profileArea"></path>
+          <path id="profileLine"></path>
+          <g id="profileCursor" hidden>
+            <line id="profileCursorLine" y1="18" y2="190"></line>
+            <circle id="profileCursorDot" r="4"></circle>
+          </g>
+          <g id="profileDistanceLabels"></g>
+        </svg>
+        <div class="profile-tip" id="profileTip" hidden>
+          <b id="profileTipElev">840 m</b>
+          <span id="profileTipDist">3.4 km</span>
+        </div>
+      </div>
+    </section>
+
+    <article class="access panel" aria-labelledby="accessTitle">
+      <div class="access-head">
+        <div>
+          <p class="mono">Trailhead access</p>
+          <h2 id="accessTitle">Road 18, past the old mill.</h2>
+        </div>
+        <span class="mono">4.2 km gravel</span>
+      </div>
+      <div class="access-grid">
+        <div><span>Drive</span><b>38 min</b><small>From Kestrel village</small></div>
+        <div><span>Parking</span><b>14 spaces</b><small>No overnight</small></div>
+        <div><span>Permit</span><b>None</b><small>Dogs on leash</small></div>
+      </div>
+      <p class="access-note">The final stretch is graded gravel and fine for low clearance in dry weather. The gate closes at dusk.</p>
+    </article>
+    </div>
+
+    <aside class="sidebar">
+      <article class="detail panel" id="routeDetail" aria-live="polite">
+        <div class="detail-stripe" id="detailStripe"></div>
+        <div class="detail-head">
+          <div>
+            <p class="mono" id="detailNumber">Route 02</p>
+            <h2 id="detailName">Kestrel Ridge Traverse</h2>
+          </div>
+          <span class="difficulty hard" id="detailDifficulty">Hard</span>
+        </div>
+        <p class="detail-desc" id="detailDescription">A long, exposed line from the valley floor to the northern gate. The ridge stays above the trees for four kilometres, with water at the camp and nowhere else.</p>
+        <div class="tag-row" id="detailTags"></div>
+        <div class="detail-stats">
+          <div><span>Distance</span><b id="detailDistance">11.8 km</b></div>
+          <div><span>Time</span><b id="detailTime">4 h 45</b></div>
+          <div><span>Ascent</span><b id="detailAscent">890 m</b></div>
+          <div><span>Shape</span><b id="detailType">Point to point</b></div>
+        </div>
+        <div class="detail-actions">
+          <button class="save-btn" id="saveRoute" type="button" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v17l-5-4-5 4Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            <span id="saveLabel">Save route</span>
+          </button>
+          <button class="focus-btn" id="focusRoute" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+            Focus on map
+          </button>
+        </div>
+        <div class="condition-line"><span>Condition</span><b id="detailCondition">Dry</b><i class="status-dot" aria-hidden="true"></i><span class="mono" id="detailSeason">Jun–Oct</span></div>
+        <h3 class="mini-title">Waypoints <span id="waypointCount">5</span></h3>
+        <ol class="waypoint-list" id="waypointList"></ol>
+      </article>
+
+      <section class="routes panel" id="routes" aria-labelledby="routesTitle">
+        <div class="routes-head">
+          <div>
+            <p class="mono">Route index</p>
+            <h2 id="routesTitle">Six ways in</h2>
+          </div>
+          <span class="mono" id="routeVisible">6 / 6</span>
+        </div>
+        <div class="filters">
+          <label class="search">
+            <span class="visually-hidden">Search routes or features</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <input id="searchInput" type="search" placeholder="Search routes or features" autocomplete="off">
+          </label>
+          <div class="chips" role="group" aria-label="Filter routes by difficulty">
+            <button class="chip is-active" type="button" data-filter="all">All</button>
+            <button class="chip" type="button" data-filter="Easy">Easy</button>
+            <button class="chip" type="button" data-filter="Moderate">Moderate</button>
+            <button class="chip" type="button" data-filter="Hard">Hard</button>
+          </div>
+          <button class="saved-filter" id="savedFilter" type="button" aria-pressed="false">Saved <span id="savedCount">0</span></button>
+        </div>
+        <div class="route-list" id="routeList"></div>
+        <p class="empty" id="routeEmpty" hidden>No routes match that search.</p>
+      </section>
+    </aside>
+
+  </section>
+
+  <section class="notes" id="notes" aria-labelledby="notesTitle">
+    <div class="notes-head">
+      <p class="eyebrow">Field notes</p>
+      <h2 id="notesTitle">Before you leave the car.</h2>
+    </div>
+    <div class="note-grid">
+      <article>
+        <span class="note-num">01</span>
+        <h3>Water</h3>
+        <p>Moss Creek is the last reliable refill on the eastern side. Treat everything above the old growth.</p>
+        <p class="mono">Refill / km 1.8</p>
+      </article>
+      <article>
+        <span class="note-num">02</span>
+        <h3>Weather</h3>
+        <p>The ridge runs four degrees cooler than the valley. Cloud can close the pass in under an hour.</p>
+        <p class="mono">Snow line / 1,850 m</p>
+      </article>
+      <article>
+        <span class="note-num">03</span>
+        <h3>Trace</h3>
+        <p>Stay on the duff through the cedar grove. The shortcut braid is shallow-rooted and slow to recover.</p>
+        <p class="mono">Pack out / everything</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-brand">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 28c5-11 9-17 16-17s10 6 16 15" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 31c4-7 8-11 12-11s8 4 12 10" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 34c3-4 5-6 8-6s5 2 8 5" fill="none" stroke="#c9552c" stroke-width="1.8"/></svg>
+    <span>Contour</span>
+  </div>
+  <p>Kestrel Ridge trail atlas. Drawn from survey notes, not satellite tiles.</p>
+  <p class="mono">46.82° N / 121.73° W</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
